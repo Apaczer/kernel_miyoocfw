@@ -45,9 +45,10 @@
 //   2 -> "POCKETGOV1" meaning ABXY flipped southeast <-> northwest
 //   3 -> "SUP M3" meaning AB flipped - matrix multiplexation for inputs.
 //   4 -> "XYC Q8" meaning AB flipped & with echo and debounce code - mapping through GPIO reads except from HOME/START/VOLUME 
-//   5 -> V90 meaning additional L2/R2 physical buttons
-//   6 -> Q20 meaning Lfunction/Rfunction button (similarly to Q90)
-
+//   5 -> "V90" meaning additional L2/R2 physical buttons
+//   6 -> "Q20" meaning one extra Lfunction button + Rfunction button as HOME
+//   7 -> "Q90" meaning one extra Rfunction button + Lfunction button as HOME
+//   miyoo_layout == 2 is default mapping across devices with different miyoo_version to adhere to design differences in above consoles
 /* 
  * Hardware map (as observed from the working code)
  *
@@ -242,7 +243,7 @@ static void scan_handler(unsigned long unused)
           case 1:
             gpio_direction_output(OUT_2, 0);
             break;
-	  case 2: case 5: case 6:
+          case 2: case 5: case 6: case 7:
             gpio_direction_output(OUT_3, 0);
             break;
           }
@@ -541,6 +542,68 @@ static void scan_handler(unsigned long unused)
               val|= MY_R;
           }
           break; 
+      case 7:
+          gpio_direction_input(IN_1);
+          gpio_direction_input(IN_2);
+          gpio_direction_input(IN_3);
+          gpio_direction_input(IN_4);
+          gpio_direction_input(OUT_1);
+          gpio_direction_input(OUT_2);
+          gpio_direction_input(OUT_3);
+          gpio_direction_input(IN_A);
+          gpio_direction_input(IN_TA);
+          gpio_direction_input(IN_PC3);
+          gpio_direction_input(IN_PA1);
+          gpio_direction_input(IN_L1);
+          gpio_direction_input(IN_R1);
+          gpio_direction_input(IN_MENU);
+
+          if(gpio_get_value(IN_1) == 0){
+              val|= MY_UP;
+          }
+          if(gpio_get_value(IN_2) == 0){
+              val|= MY_DOWN;
+          }
+          if(gpio_get_value(IN_3) == 0){
+              val|= MY_LEFT;
+          }
+          if(gpio_get_value(IN_4) == 0){
+              val|= MY_RIGHT;
+          }
+          if(gpio_get_value(OUT_1) == 0){
+              val|= MY_A;
+          }
+          if(gpio_get_value(OUT_2) == 0){
+              val|= MY_B;
+          }
+          if(gpio_get_value(OUT_3) == 0){
+              val|= MY_TA;
+          }
+          if(gpio_get_value(IN_TA) == 0){
+              val|= MY_TB;
+          }
+          if(gpio_get_value(IN_A) == 0){
+              val|= MY_SELECT;
+          }
+          if(gpio_get_value(IN_L2) == 0){
+              val|= MY_START;
+          }
+          if(gpio_get_value(IN_L1) == 0){
+              val|= MY_L1;
+          }
+          if(gpio_get_value(IN_R1) == 0){
+              val|= MY_R1;
+          }
+          if(gpio_get_value(IN_PC3) == 0){
+              val|= MY_L2;
+          }
+          if(gpio_get_value(IN_PA1) == 0){
+              val|= MY_R3;
+          }
+          if(gpio_get_value(IN_MENU) == 0){
+              val|= MY_R;
+          }
+          break;
   }
 
   if(lockkey){
@@ -611,6 +674,25 @@ static void scan_handler(unsigned long unused)
       val|= MY_R3;
       hotkey_actioned = true;
 	}
+  } else if(miyoo_ver == 7) {
+    if((val & MY_R) && (val & MY_L1)) {
+      val&= ~MY_R;
+      val&= ~MY_L1;
+      val|= MY_L2;
+      hotkey_actioned = true;
+    }
+    if((val & MY_R) && (val & MY_R1)) {
+      val&= ~MY_R;
+      val&= ~MY_R1;
+      val|= MY_R2;
+      hotkey_actioned = true;
+    }
+    if((val & MY_R) && (val & MY_R3)) {
+      val&= ~MY_R;
+      val&= ~MY_R3;
+      val|= MY_L3;
+      hotkey_actioned = true;
+	}
   } else {
     if((val & MY_R) && (val & MY_B)) {
       val&= ~MY_R;
@@ -664,42 +746,79 @@ static void scan_handler(unsigned long unused)
 			  hotkey_actioned = true;
 	  	  hotkey = hotkey == 0 ? 3 : hotkey;
       }
+		else if(miyoo_ver == 7) {
+	  if(!hotkey_down) {
+        bd = backlight_device_get_by_type(BACKLIGHT_RAW);
+        if(bd->props.brightness > 1) {
+          backlight_device_set_brightness(bd, bd->props.brightness - 1);
+        }
+        hotkey_down = true;
+      }	
+	 	}
 	 	}
 	 	else if((val & MY_R) && (val & MY_A)){
       if(miyoo_ver == 2 || miyoo_ver == 5 || miyoo_ver == 6)  {
 	  	  hotkey_actioned = true;
 	  	  hotkey = hotkey == 0 ? 4 : hotkey;
       }
+	  else if(miyoo_ver == 7) {
+	  if(!hotkey_down) {
+        MIYOO_DECREASE_VOLUME();
+        hotkey_down = true;
+      }	
+	 	}
 	 	}
 		else if((val & MY_R) && (val & MY_TB)){
       if(miyoo_ver == 2 || miyoo_ver == 5 || miyoo_ver == 6)  {
         hotkey_actioned = true;
         hotkey = hotkey == 0 ? 1 : hotkey;
       }
+	  else if(miyoo_ver == 7) {
+	  if(!hotkey_down) {
+        MIYOO_INCREASE_VOLUME();
+        hotkey_down = true;
+      }	
+	 	}
 		}
 		else if((val & MY_R) && (val & MY_TA)){
       if(miyoo_ver == 2 || miyoo_ver == 5 || miyoo_ver == 6)  {
         hotkey_actioned = true;
         hotkey = hotkey == 0 ? 2 : hotkey;
       }
+	  else if(miyoo_ver == 7) {
+	  if(!hotkey_down) {
+        bd = backlight_device_get_by_type(BACKLIGHT_RAW);
+        if(bd->props.brightness < 2) {
+          backlight_device_set_brightness(bd, 3);
+        } else if (bd->props.brightness < 11) {
+          backlight_device_set_brightness(bd, bd->props.brightness + 1);
+        }
+        hotkey_down = true;
+      }	
+	 	}
 		}
 		else if((val & MY_R) && (val & MY_UP)){
+      if(!(miyoo_ver == 7)){
       if(!hotkey_down) {
         MIYOO_INCREASE_VOLUME();
         hotkey_down = true;
       }
+		}
 			hotkey_actioned = true;
 			//hotkey = hotkey == 0 ? 5 : hotkey;
 		}
 		else if((val & MY_R) && (val & MY_DOWN)){
+      if(!(miyoo_ver == 7)){
       if(!hotkey_down) {
         MIYOO_DECREASE_VOLUME();
         hotkey_down = true;
       }
+		}
 			hotkey_actioned = true;
 			//hotkey = hotkey == 0 ? 6 : hotkey;
 		}
 		else if((val & MY_R) && (val & MY_LEFT)){
+      if(!(miyoo_ver == 7)){
       if(!hotkey_down) {
         bd = backlight_device_get_by_type(BACKLIGHT_RAW);
         if(bd->props.brightness > 1) {
@@ -707,10 +826,12 @@ static void scan_handler(unsigned long unused)
         }
         hotkey_down = true;
       }
+		}
 			hotkey_actioned = true;
 			//hotkey = hotkey == 0 ? 7 : hotkey;
 		}
 	 else if((val & MY_R) && (val & MY_RIGHT)){
+      if(!(miyoo_ver == 7)){
       if(!hotkey_down) {
         bd = backlight_device_get_by_type(BACKLIGHT_RAW);
         if(bd->props.brightness < 2) {
@@ -720,6 +841,7 @@ static void scan_handler(unsigned long unused)
         }
         hotkey_down = true;
       }
+		}
 			hotkey_actioned = true;
 			//hotkey = hotkey == 0 ? 8 : hotkey;
 		}
@@ -761,15 +883,15 @@ static void scan_handler(unsigned long unused)
     report_key(pre, MY_UP, KEY_UP);
     report_key(pre, MY_DOWN, KEY_DOWN);
     report_key(pre, MY_LEFT, KEY_LEFT);
-    report_key(pre, MY_R, KEY_RIGHTCTRL);
     report_key(pre, MY_RIGHT, KEY_RIGHT);
+    report_key(pre, MY_R, KEY_RIGHTCTRL); // "HOME/RESET" button
     switch (miyoo_layout) {
         case 1:
             //MiyooCFW 2.0 layout
-            report_key(pre, MY_A, KEY_LEFTCTRL);
-            report_key(pre, MY_B, KEY_SPACE);
-            report_key(pre, MY_TA, KEY_LEFTALT);
-            report_key(pre, MY_TB, KEY_LEFTSHIFT);
+            report_key(pre, MY_A, KEY_LEFTCTRL); // "B" for PocketGO - bottom face button
+            report_key(pre, MY_B, KEY_SPACE); // "Y" for PocketGO - left face button
+            report_key(pre, MY_TA, KEY_LEFTALT); // "A" for PocketGO - right face button
+            report_key(pre, MY_TB, KEY_LEFTSHIFT); // "X" for PocketGO - upper face button
             break;
         case 2:
             //CFW 1.3.3 Bittboy layout (A-TA & B-TB are swapped)
