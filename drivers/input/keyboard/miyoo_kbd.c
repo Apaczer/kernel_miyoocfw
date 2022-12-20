@@ -754,6 +754,8 @@ static void scan_handler(unsigned long unused)
         }
         hotkey_down = true;
       }	
+			hotkey_actioned = true;
+			//hotkey = hotkey == 0 ? 3 : hotkey;
 	 	}
 	 	}
 	 	else if((val & MY_R) && (val & MY_A)){
@@ -766,6 +768,8 @@ static void scan_handler(unsigned long unused)
         MIYOO_DECREASE_VOLUME();
         hotkey_down = true;
       }	
+			hotkey_actioned = true;
+			//hotkey = hotkey == 0 ? 4 : hotkey;
 	 	}
 	 	}
 		else if((val & MY_R) && (val & MY_TB)){
@@ -778,6 +782,8 @@ static void scan_handler(unsigned long unused)
         MIYOO_INCREASE_VOLUME();
         hotkey_down = true;
       }	
+			hotkey_actioned = true;
+			//hotkey = hotkey == 0 ? 1 : hotkey;
 	 	}
 		}
 		else if((val & MY_R) && (val & MY_TA)){
@@ -795,6 +801,8 @@ static void scan_handler(unsigned long unused)
         }
         hotkey_down = true;
       }	
+			hotkey_actioned = true;
+			//hotkey = hotkey == 0 ? 2 : hotkey;
 	 	}
 		}
 		else if((val & MY_R) && (val & MY_UP)){
