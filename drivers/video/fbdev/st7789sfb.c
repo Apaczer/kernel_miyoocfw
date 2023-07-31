@@ -587,6 +587,7 @@ static void suniv_cpu_init(struct myfb_par *par)
     } else {
 	writel(0x90000d00, iomm.ccm + PLL_DDR_CTRL_REG);
     }
+    writel((1 << 20), iomm.ccm + PLL_DDR_CTRL_REG);
     while ((readl(iomm.ccm + PLL_DDR_CTRL_REG) & (1 << 28)) == 0){}
     while ((readl(iomm.ccm + PLL_PERIPH_CTRL_REG) & (1 << 28)) == 0){}
 
@@ -924,22 +925,23 @@ static long myioctl(struct file *filp, unsigned int cmd, unsigned long arg)
         case MIYOO_FB0_SET_TEFIX:
             ddr_clock = arg;
             printk("st7789sfb: set TE fix to: %d", (int)ddr_clock);
-     if (ddr_clock ==1 ) {
-        writel(0x90001c01, iomm.ccm + PLL_DDR_CTRL_REG);
-    } else if (ddr_clock == 2) {
-        writel(0x90000f00, iomm.ccm + PLL_DDR_CTRL_REG);
-    } else if (ddr_clock == 3) { 
-        writel(0x90001000, iomm.ccm + PLL_DDR_CTRL_REG);
-    } else {
-	writel(0x90000d00, iomm.ccm + PLL_DDR_CTRL_REG);
-    }
+            if (ddr_clock == 1 ) {
+                writel(0x90001c01, iomm.ccm + PLL_DDR_CTRL_REG);
+            } else if (ddr_clock == 2) {
+                writel(0x90000f00, iomm.ccm + PLL_DDR_CTRL_REG);
+            } else if (ddr_clock == 3) { 
+                writel(0x90001000, iomm.ccm + PLL_DDR_CTRL_REG);
+            } else {
+                writel(0x90000d00, iomm.ccm + PLL_DDR_CTRL_REG);
+            }
+            writel((1 << 20), iomm.ccm + PLL_DDR_CTRL_REG);
             while ((readl(iomm.ccm + PLL_DDR_CTRL_REG) & (1 << 28)) == 0){};
             suniv_lcdc_init(320, 240);
             break;
         case MIYOO_FB0_GET_TEFIX:
             ret = copy_to_user((void*)arg, &ddr_clock, sizeof(unsigned long));
-	    ddr_read_clock = readl(iomm.ccm + PLL_DDR_CTRL_REG);
-	    printk("DDR_clock set to 0x%x", (uint32_t)ddr_read_clock);
+            ddr_read_clock = readl(iomm.ccm + PLL_DDR_CTRL_REG);
+            printk("DDR_clock set to 0x%x", (uint32_t)ddr_read_clock);
 	    break;				
     }
     return 0;
