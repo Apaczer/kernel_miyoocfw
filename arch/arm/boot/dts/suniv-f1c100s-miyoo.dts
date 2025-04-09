@@ -58,6 +58,13 @@
 };
 
 &codec {
+	allwinner,audio-routing =
+			"Headphone", "HP",
+			"Headphone", "HPCOM",
+			"LINEIN", "Line In",
+			"FMINL", "Left FM In",
+			"FMINR", "Right FM In",
+			"MIC", "Mic";
 	status = "okay";
 };
 
@@ -95,7 +102,8 @@
 };
 
 &cedar_ve {
-	status = "okay";                                                                                                                                                                                         };
+	status = "okay";
+};
 
 &ion {
 	status = "okay";
